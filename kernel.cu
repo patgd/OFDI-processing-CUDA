@@ -1,4 +1,3 @@
-
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -86,7 +85,6 @@ cufftHandle gchForwardComplex;
 cufftComplex* gpcProcessKCorrected;
 size_t gnKCorrectedPitch;
 
-
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true)
 {
@@ -96,7 +94,6 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
         if (abort) exit(code);
     }
 }
-
 
 extern "C" {
     __declspec(dllexport) int getDeviceCount(int* nNumberDevices) {
@@ -109,7 +106,6 @@ extern "C" {
         return nRet;
     }	// int getDeviceCount
 }	// extern "C"
-
 
 extern "C" {
     __declspec(dllexport) int getDeviceName(int nDeviceNumber, char* strDeviceName) {
@@ -130,7 +126,6 @@ extern "C" {
         return nRet;
     }	// int getDeviceName
 }	// extern "C"
-
 
 extern "C" {
     __declspec(dllexport) int cleanup() {
@@ -165,7 +160,6 @@ extern "C" {
         return -1;
     }   // __declspec
 }   // extern
-
 
 extern "C" {
     __declspec(dllexport) int initialize(int nMode, int nRawLineLength, int nRawNumberLines, int nProcessNumberLines, int nProcessedNumberLines) {
@@ -256,14 +250,6 @@ extern "C" {
     }   // int initialize
 }   // extern
 
-
-extern "C" {
-    __declspec(dllexport) int getDataSDOCT(void* pnIMAQParallel) {
-        return -1;
-    }   // int getData
-}   // extern
-
-
 int readPSSDOCTFile(short** pnBuffer) {
     // read data from file
     std::ifstream fRawBinary("pdH.bin");
@@ -280,7 +266,6 @@ int readPSSDOCTFile(short** pnBuffer) {
 
     return -1;
 }
-
 
 extern "C" {
     __declspec(dllexport) int getDataPSSDOCT(void* pnIMAQParallel, void* pnIMAQPerpendicular) {
@@ -299,80 +284,6 @@ extern "C" {
         return -1;
     }   // int getData
 }   // extern
-
-
-extern "C" {
-    __declspec(dllexport) int getDataLineField(void* pdDAQ, void* pnIMAQParallel) {
-        return -1;
-    }   // int getData
-}   // extern
-
-
-extern "C" {
-    __declspec(dllexport) int getDataOFDI(void* pnAlazar) {
-        return -1;
-    }   // int getData
-}   // extern
-
-
-extern "C" {
-    __declspec(dllexport) int getDataPSOFDI(void* pnAlazar) {
-        return -1;
-    }   // int getData
-}   // extern
-
-
-extern "C" {
-    __declspec(dllexport) int processCalibration() {
-        // loop through section by section
-
-          // loop though line by line in section
-
-          // process parallel phase ramp
-
-          // process perpendicular phase ramp if needed
-        return -1;
-    }   // int getData
-}   // extern
-
-
-int calculatePhaseRamp(void* pnRawData, int nPeakLeft, int nPeakRight, int nPeakRound, int nAmplitudeThreshold, int nAmplitudeLeft, int nAmplitudeRight, void* pfDepthProfile, void* pfPeak, void* pdAmplitude, void* pdPhaseRamp) {
-    // forward fft of raw data (1)
-
-    // check/save peak mask parameters (calculate mask if necessary)
-
-    // apply mask to get cut peak
-
-    // inverse fft to get complex spectrum (2)
-
-    // calculate amplitude and phase plot
-
-    // get left and right bounds of amplitude plot
-
-    // unwrap phase plot
-
-    return -1;
-}   // int calculatePhaseRamp
-
-
-extern "C" {
-    __declspec(dllexport) int sendData(int nMode) {
-        return -1;
-    }   // int sendData
-}   // extern
-
-
-//__global__ void calculateMean(float* pfMatrix, float* pfMean, int nNumberLines, int nLineLength) {
-//    int nPoint = threadIdx.x + blockIdx.x * blockDim.x;
-//    float fSum = 0.0;
-//    int nOffset = nPoint;
-//    for (int nLine = 0; nLine < nNumberLines; nLine ++) {
-//        fSum += pfMatrix[nOffset];
-//        nOffset += nLineLength;
-//    }   // for (int nLine
-//    pfMean[nPoint] = fSum / ((float)nNumberLines);
-//}   // void calculateReference
-
 
 __global__ void calculateMean(float* pfMatrix, float* pfMean, int nNumberLines, int nLineLength) {
     __shared__ float pfSum[1024];
@@ -400,21 +311,6 @@ __global__ void calculateMean(float* pfMatrix, float* pfMean, int nNumberLines, 
     }
 }   // void calculateMean
 
-
-//__global__ void subtractMean(float* pfMatrix, float* pfMean, int nNumberLines, int nLineLength) {
-//    int nPoint = threadIdx.x + blockIdx.x * blockDim.x;
-//    float fMean0 = pfMean[0 * nLineLength + nPoint];
-//    float fMean1 = pfMean[1 * nLineLength + nPoint];
-//    float* pfLine = pfMatrix + nPoint;
-//    for (int nLine = 0; nLine < nNumberLines; nLine += 2) {
-//        *(pfLine) -= fMean0;
-//        pfLine += nLineLength;
-//        *(pfLine) -= fMean1;
-//        pfLine += nLineLength;
-//    }   // for (int nLine
-//}   // void subtractMean
-
-
 __global__ void subtractMean(float* pfMatrix, float* pfMean, int nNumberLines, int nLineLength) {
     int nPoint = blockIdx.x * blockDim.x + threadIdx.x;
     float fMean = pfMean[nPoint];
@@ -426,7 +322,6 @@ __global__ void subtractMean(float* pfMatrix, float* pfMean, int nNumberLines, i
         nPosition += nLineLength;
     }   // for (int nLine
 }   // void subtractMean
-
 
 __global__ void calculateMask(float* pfMask, int nLength, int nStart, int nStop, int nRound) {
     int nPoint = blockIdx.x * blockDim.x + threadIdx.x;
@@ -444,7 +339,6 @@ __global__ void calculateMask(float* pfMask, int nLength, int nStart, int nStop,
     }   // if (nPoint
 }   // void calculateMask
 
-
 __global__ void applyMask(cufftComplex* pcMatrix, float* pfMask, int nNumberLines, int nLineLength) {
     int nPoint = blockIdx.x * blockDim.x + threadIdx.x;
     float fMask = pfMask[nPoint];
@@ -458,12 +352,10 @@ __global__ void applyMask(cufftComplex* pcMatrix, float* pfMask, int nNumberLine
     }   // for (int nLine
 }   // void subtractMean
 
-
 __global__ void calculatePhase(cufftComplex* pcMatrix, float* pfPhase, int nNumberLines, int nLineLength) {
     int nPosition = (blockIdx.y * blockDim.y + threadIdx.y) * nLineLength + (blockIdx.x * blockDim.x + threadIdx.x);
     pfPhase[nPosition] = atan2(pcMatrix[nPosition].y, pcMatrix[nPosition].x);
 }   // void calculatePhase
-
 
 __global__ void unwrapPhase(float* pfPhase, int nNumberLines, int nLineLength, float fPiEps, float f2Pi) {
     __shared__ float pfUnwrappedEnds[2048];
@@ -527,7 +419,6 @@ __global__ void unwrapPhase(float* pfPhase, int nNumberLines, int nLineLength, f
     }
 }   // void unwrapPhase
 
-
 __global__ void matchPhase(float* pfPhase, int nNumberLines, int nLineLength, float f2Pi) {
     __shared__ float pfOffset[1024];
 
@@ -545,7 +436,6 @@ __global__ void matchPhase(float* pfPhase, int nNumberLines, int nLineLength, fl
     for (int nPoint = nStartPoint; nPoint < nStopPoint; nPoint++)
         pfPhase[nPoint] -= fOffset;
 }   // void matchPhase
-
 
 __global__ void getPhaseLimits(float* pfPhase, int nNumberLines, int nLineLength, int nLeft, int nRight, float *pfLeft, float *pfRight) {
     __shared__ float pfSum[1024];
@@ -578,7 +468,6 @@ __global__ void getPhaseLimits(float* pfPhase, int nNumberLines, int nLineLength
     }   // if (threadIdx.x
 }
 
-
 __global__ void calculateK(float* pfPhase, float* pfK, int* pnIndex, int* pnAssigned, int nNumberLines, int nLineLength, float* pfLineParameters, int nLeft, int nRight, float* pfLeft, float* pfRight, int nMode) {
 
     // calculate slope and offset
@@ -610,7 +499,6 @@ __global__ void calculateK(float* pfPhase, float* pfK, int* pnIndex, int* pnAssi
         nIndex++;
     }   // for (int nPoint
 }   // void calculateK
-
 
 __global__ void cleanIndex(float* pfK, int* pnIndex, int* pnAssigned, int nNumberLines, int nLineLength) {
     int nLine = blockIdx.x * blockDim.y + threadIdx.y;
@@ -677,7 +565,6 @@ __global__ void cleanIndex(float* pfK, int* pnIndex, int* pnAssigned, int nNumbe
 
 }
 
-
 __global__ void interpCubicSpline(float* pfK, int* pnIndex, float* pfSpectrum, float* pfInterpSpectrum, int nNumberLines, int nLineLength) {
     int nPosition = (blockIdx.y * blockDim.y + threadIdx.y) * nLineLength + (blockIdx.x * blockDim.x + threadIdx.x);
     int nIndex = pnIndex[nPosition];
@@ -711,13 +598,11 @@ __global__ void interpCubicSpline(float* pfK, int* pnIndex, float* pfSpectrum, f
     pfInterpSpectrum[nPosition] = (((f1 / f0) * fK + (f2 / f0)) * fK + (f3 / f0)) * fK + (f4 / f0);
 }
 
-
 __global__ void calculateDispersionCorrection(float* pfPhase, cufftComplex* pcCorrection) {
     int nPoint = blockIdx.x * blockDim.x + threadIdx.x;
     pcCorrection[nPoint].x = cosf(pfPhase[nPoint]);
     pcCorrection[nPoint].y = -sinf(pfPhase[nPoint]);
 }
-
 
 __global__ void applyDispersionCorrection(float* pfMatrix, cufftComplex* pcCorrection, cufftComplex* pcMatrix, int nNumberLines, int nLineLength) {
     int nPoint = blockIdx.x * blockDim.x + threadIdx.x;
@@ -733,301 +618,6 @@ __global__ void applyDispersionCorrection(float* pfMatrix, cufftComplex* pcCorre
         nPosition += nLineLength;
     }   // for (int nLine
 }   // void subtractMean
-
-
-
-
-int main()
-{
-    cudaError_t cudaStatus;
-    int nStatus;
-
-    // get device count
-    int m_nDeviceCount;
-    nStatus = getDeviceCount(&m_nDeviceCount);
-    if (nStatus == -1) {
-        fprintf(stderr, "getDeviceCount failed!");
-        return 1;
-    }   // if (nStatus
-    if (m_nDeviceCount == 1)
-        fprintf(stdout, "%d device found.\n", m_nDeviceCount);
-    else
-        fprintf(stdout, "%d devices found.\n", m_nDeviceCount);
-    fprintf(stdout, "\n");
-
-    // loop through number of devices and get names
-    char* m_strDeviceName;
-    m_strDeviceName = (char*)malloc(256 * sizeof(char));
-    for (int nDevice = 0; nDevice < m_nDeviceCount; nDevice++) {
-        nStatus = getDeviceName(nDevice, m_strDeviceName);
-        if (nStatus != 0) {
-            fprintf(stderr, "can't get device name");
-            return 1;
-        }   // if (nStatus
-        fprintf(stdout, "device %d : %s\n", nDevice, m_strDeviceName);
-    }   // for (int nDevice
-    free(m_strDeviceName);
-    fprintf(stdout, "\n");
-
-    // initialization
-    initialize(1, 1024, 2048, 1024, 2048);
-
-    // read data from binary file
-    short* pnParallel;
-    readPSSDOCTFile(&pnParallel);
-    fprintf(stdout, "initialization complete\n");
-
-    // change array type while copying into host memory array (need to do this in C#)
-    std::copy(pnParallel, pnParallel + gnCalibrationNumberLines * gnRawLineLength, gpfRawCalibration);
-    fprintf(stdout, "initialization complete\n");
-
-    // start C++ clock
-    auto t_start = std::chrono::high_resolution_clock::now();
-
-    // start timer
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
-
-    cudaDeviceSynchronize();
-
-    // pause
-    //    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    int nNumberReps = 1000;
-
-    //// set up number of threads per block
-    int nThreadsPerBlock;
-    dim3 d3Threads;
-    dim3 d3Blocks;
-
-    for (int nRep = 0; nRep < nNumberReps; nRep++) {
-
-        // loop through in chunks that can be processed
-        int nAline, nNumberLinesInChunk;
-        for (nAline = 0; nAline < gnCalibrationNumberLines; nAline += gnProcessNumberLines) {
-
-            // copy chunk of data for processing
-            nNumberLinesInChunk = nAline + gnProcessNumberLines - gnCalibrationNumberLines;
-            if (nNumberLinesInChunk <= 0)
-                nNumberLinesInChunk = gnProcessNumberLines;
-
-            // ********** calibration - even **********
-
-            // copy every other line starting at 0
-            gpuErrchk(cudaMemcpy2D(gpfProcessCalibration, gnProcessCalibrationPitch, gpfRawCalibration + (nAline + 0) * gnRawLineLength, 2 * gnProcessCalibrationPitch, gnProcessCalibrationPitch, nNumberLinesInChunk >> 1, cudaMemcpyHostToDevice));
-
-            // calculate reference
-            d3Threads.x = 128;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            calculateMean<<<d3Blocks, d3Threads>>>(gpfProcessCalibration, gpfReferenceEven, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // subtract reference
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            subtractMean<<<d3Blocks, d3Threads>>>(gpfProcessCalibration, gpfReferenceEven, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // forward fft
-            gpuErrchk(cudaMemset2D(gpcProcessDepthProfile, gnProcessDepthProfilePitch, 0.0, gnProcessDepthProfilePitch, gnProcessNumberLines >> 1));
-            cufftExecR2C(gchForward, gpfProcessCalibration, gpcProcessDepthProfile);
-
-            // calculate mask
-            nThreadsPerBlock = 512;
-            calculateMask<<<gnRawLineLength / nThreadsPerBlock, nThreadsPerBlock>>>(gpfCalibrationMask, gnRawLineLength, 50, 100, 16);
-
-            // apply mask
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            applyMask<<<d3Blocks, d3Threads>>>(gpcProcessDepthProfile, gpfCalibrationMask, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // reverse fft
-            cufftExecC2C(gchReverse, gpcProcessDepthProfile, gpcProcessSpectrum, CUFFT_INVERSE);
-
-            // calculate phase
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnRawLineLength / d3Threads.x;
-            d3Blocks.y = (gnProcessNumberLines >> 1) / d3Threads.y;
-            d3Blocks.z = 1;
-            calculatePhase<<<d3Blocks, d3Threads>>>(gpcProcessSpectrum, gpfProcessPhase, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            d3Threads.x = 256;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = (nNumberLinesInChunk >> 1) / d3Threads.y;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            unwrapPhase<<<d3Blocks, d3Threads>>>(gpfProcessPhase, nNumberLinesInChunk >> 1, gnRawLineLength, gfPiEps, gf2Pi);
-
-            d3Threads.x = 256;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = (nNumberLinesInChunk >> 1) / d3Threads.y;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            matchPhase<<<d3Blocks, d3Threads>>>(gpfProcessPhase, nNumberLinesInChunk >> 1, gnRawLineLength, gf2Pi);
-
-            nThreadsPerBlock = 32;
-            getPhaseLimits<<<2, nThreadsPerBlock>>>(gpfProcessPhase, nNumberLinesInChunk >> 1, gnRawLineLength, 32, gnRawLineLength-32, gpfLeftPhase, gpfRightPhase);
-
-            gnKMode = 1;
-            d3Threads.x = 128;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = (nNumberLinesInChunk >> 1) / d3Threads.y;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            cudaMemset2D(gpnProcessAssigned, gnAssignedPitch, 0, gnRawLineLength * sizeof(int), nNumberLinesInChunk >> 1);
-            calculateK<<<d3Blocks, d3Threads>>>(gpfProcessPhase, gpfProcessK, gpnProcessAssigned, gpnProcessIndex, nNumberLinesInChunk >> 1, gnRawLineLength, gpfKLineCoefficients, 32, gnRawLineLength - 32, gpfLeftPhase, gpfRightPhase, gnKMode);
-
-            d3Threads.x = 128;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = (nNumberLinesInChunk >> 1) / d3Threads.y;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            cleanIndex<<<d3Blocks, d3Threads>>>(gpfProcessK, gpnProcessIndex, gpnProcessAssigned, nNumberLinesInChunk >> 1, gnRawLineLength);
-
-            // ********** OCT - even **********
-
-            gpuErrchk(cudaMemcpy2D(gpfProcessOCT, gnProcessOCTPitch, gpfRawCalibration + (nAline + 0) * gnRawLineLength, 2 * gnProcessOCTPitch, gnProcessOCTPitch, nNumberLinesInChunk >> 1, cudaMemcpyHostToDevice));
-
-            // calculate reference
-            d3Threads.x = 128;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            calculateMean<<<d3Blocks, d3Threads>>>(gpfProcessOCT, gpfReferenceEven, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // subtract reference
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            subtractMean<<<d3Blocks, d3Threads>>>(gpfProcessOCT, gpfReferenceEven, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnRawLineLength / d3Threads.x;
-            d3Blocks.y = (gnProcessNumberLines >> 1) / d3Threads.y;
-            d3Blocks.z = 1;
-            interpCubicSpline<<<d3Blocks, d3Threads>>>(gpfProcessK, gpnProcessIndex, gpfProcessOCT, gpfProcessSpectrumK, nNumberLinesInChunk >> 1, gnRawLineLength);
-
-            // forward fft
-            gpuErrchk(cudaMemset2D(gpcProcessDepthProfile, gnProcessDepthProfilePitch, 0.0, gnProcessDepthProfilePitch, gnProcessNumberLines >> 1));
-            cufftExecR2C(gchForward, gpfProcessSpectrumK, gpcProcessDepthProfile);
-
-            // calculate mask
-            nThreadsPerBlock = 512;
-            calculateMask<<<gnRawLineLength / nThreadsPerBlock, nThreadsPerBlock>>>(gpfDispersionMask, gnRawLineLength, 50, 100, 16);
-
-            // apply mask
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            applyMask<<<d3Blocks, d3Threads>>>(gpcProcessDepthProfile, gpfDispersionMask, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // reverse fft
-            cufftExecC2C(gchReverse, gpcProcessDepthProfile, gpcProcessSpectrum, CUFFT_INVERSE);
-
-            // calculate phase
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnRawLineLength / d3Threads.x;
-            d3Blocks.y = (gnProcessNumberLines >> 1) / d3Threads.y;
-            d3Blocks.z = 1;
-            calculatePhase<<<d3Blocks, d3Threads>>>(gpcProcessSpectrum, gpfProcessPhase, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // calculate dispersion correction
-            nThreadsPerBlock = 512;
-            calculateDispersionCorrection<<<gnRawLineLength / nThreadsPerBlock, nThreadsPerBlock>>>(gpfProcessPhase, gpcDispersionCorrection);
-
-            // apply correction
-            d3Threads.x = 32;
-            d3Threads.y = 1024 / d3Threads.x;
-            d3Threads.z = 1;
-            d3Blocks.x = gnProcessNumberLines / d3Threads.x;
-            d3Blocks.y = 1;
-            d3Blocks.z = 1;
-            applyDispersionCorrection<<<d3Blocks, d3Threads>>>(gpfProcessSpectrumK, gpcDispersionCorrection, gpcProcessKCorrected, nNumberLinesInChunk >> 1, gnRawLineLength);
-            gpuErrchk(cudaPeekAtLastError());
-
-            // forward fft
-            cufftExecC2C(gchForwardComplex, gpcProcessKCorrected, gpcProcessDepthProfile, CUFFT_FORWARD);
-
-            // copy to results array
-            cudaMemcpy2D(gpcProcessedOCT + (nAline + 0) * gnMidLength, 2 * gnMidLength * sizeof(cufftComplex), gpcProcessDepthProfile, gnProcessDepthProfilePitch, gnMidLength * sizeof(cufftComplex), nNumberLinesInChunk >> 1, cudaMemcpyDeviceToHost);
-
-        }   // for (nAline
-
-        cudaDeviceSynchronize();
-    }   // for (int nRep
-
-    // stop C++ timer
-    auto t_end = std::chrono::high_resolution_clock::now();
-
-    // stop timer
-    cudaEventRecord(stop);
-    // can do transfers back to host memory here
-    cudaEventSynchronize(stop);
-
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    fprintf(stdout, "time in milliseconds = %f\n", elapsed_time_ms / nNumberReps);
-
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    fprintf(stdout, "time in milliseconds = %f\n", milliseconds / nNumberReps);
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-    fprintf(stdout, "\n");
-
-    // free memory
-    cleanup();
-
-    // cudaDeviceReset must be called before exiting in order for profiling and
-    // tracing tools such as Nsight and Visual Profiler to show complete traces.
-    cudaStatus = cudaDeviceReset();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceReset failed!");
-        return 1;
-    }
-
-    return 0;
-}
-
-//extern "C" {
-//    __declspec(dllexport) __cdecl void initialize_nOCTcuda()
-//}
 
 extern "C" {
     __declspec(dllexport) __cdecl void copyFromHostToDevice_nOCTcuda(){
@@ -1068,33 +658,5 @@ extern "C" {
         //gpuErrchk(cudaPeekAtLastError());
         #endregion // subtract reference
         
-    }
-}
-
-extern "C" {
-    __declspec(dllexport) int calculateCalibration_nOCTcuda(){
-    
-    return 0;
-    }
-}
-
-extern "C" {
-    __declspec(dllexport) int applyCalibration_nOCTcuda(){
-    
-    return 0;
-    }
-}
-
-extern "C" {
-    __declspec(dllexport) int calculateDispersion_nOCTcuda(){
-    
-    return 0;
-    }
-}
-
-extern "C" {
-    __declspec(dllexport) int getFinalResults_nOCTcuda(){
-    
-    return 0;
     }
 }
